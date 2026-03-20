@@ -1,0 +1,41 @@
+{
+  "name": "rdb3",
+  "productName": "rdb3",
+  "version": "0.1.0",
+  "description": "Desktop PostgreSQL database client",
+  "main": ".vite/build/main.js",
+  "scripts": {
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^7.8.0",
+    "@electron-forge/maker-deb": "^7.8.0",
+    "@electron-forge/maker-rpm": "^7.8.0",
+    "@electron-forge/maker-squirrel": "^7.8.0",
+    "@electron-forge/maker-zip": "^7.8.0",
+    "@electron-forge/plugin-vite": "^7.8.0",
+    "@tailwindcss/vite": "^4.1.4",
+    "@types/pg": "^8.18.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.20",
+    "electron": "41.0.3",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^4.1.4",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.4"
+  },
+  "dependencies": {
+    "@codemirror/commands": "^6.8.1",
+    "@codemirror/lang-sql": "^6.8.0",
+    "@codemirror/language": "^6.10.8",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.36.5",
+    "electron-squirrel-startup": "^1.0.1",
+    "pg": "^8.13.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  }
+}
