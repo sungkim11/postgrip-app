@@ -8,6 +8,9 @@ A lightweight, fast desktop PostgreSQL client built with Electron, React, and Ty
 - Save, edit, and manage multiple PostgreSQL connections
 - Test connections before saving
 - Quick-switch between saved connections
+- Password auth or `~/.pgpass`-based auth
+- Optional SSH tunneling for PostgreSQL connections
+- SSH password and private-key authentication support
 
 ### Schema Explorer
 - Hierarchical database tree: Schema > Tables > Columns / Keys / Indexes
@@ -19,17 +22,20 @@ A lightweight, fast desktop PostgreSQL client built with Electron, React, and Ty
 
 ### SQL Editor
 - CodeMirror-based editor with SQL syntax highlighting
+- Schema-aware SQL autocompletion from the loaded database tree
 - Multiple query tabs
 - Query presets (Session, Tables, Activity)
 - Save queries to `.sql` files
 - Sortable, paginated result grid
+- Query history with execution timing
+- Result export to CSV and Excel
 
 ### Dashboard
 - Real-time server monitoring with sparkline graphs
   - CPU usage, RAM usage, cache hit ratio
   - Transaction throughput (TPS), connection saturation
 - Server uptime, database size, active connections
-- Query history with execution times
+- Active query list from PostgreSQL activity views
 
 ### Table Operations (right-click context menu)
 - **Refresh** -- reload the database tree
@@ -54,6 +60,13 @@ A lightweight, fast desktop PostgreSQL client built with Electron, React, and Ty
 
 CASCADE options are automatically enabled only when other tables reference the target via foreign keys.
 
+## Authentication
+
+- Standard PostgreSQL username/password connections
+- `pgpass` support via `~/.pgpass` or `PGPASSFILE`
+- Optional SSH tunnel layer before connecting to PostgreSQL
+- SSH auth supports password or private key + passphrase
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -71,6 +84,7 @@ CASCADE options are automatically enabled only when other tables reference the t
 - [bun](https://bun.sh/) (v1.0+)
 - [Node.js](https://nodejs.org/) (v18+)
 - A running PostgreSQL instance to connect to
+- `pg_dump` installed if you want to use the pg_dump export option
 
 ### Install Dependencies
 
@@ -89,6 +103,24 @@ bun run dev
 ```bash
 bun run start
 ```
+
+## Testing
+
+```bash
+# Unit/integration tests
+bun run test
+
+# Watch mode
+bun run test:watch
+
+# Coverage
+bun run test:coverage
+
+# Live PostgreSQL tests
+bun run test:live
+```
+
+`test:live` expects `DB_HOST`, `DB_PORT`, `DB_NAME`, and `DB_USER`. Password can come from `DB_PASSWORD` or from a matching entry in `~/.pgpass`.
 
 ## Building Installers
 
@@ -126,6 +158,7 @@ src/
     index.ts        Window creation, app lifecycle
     ipc.ts          IPC handlers
     postgres.ts     PostgreSQL operations
+    ssh-tunnel.ts   SSH tunnel lifecycle and forwarding
     types.ts        Shared type definitions
     state.ts        App state
     storage.ts      Connection persistence
@@ -140,6 +173,7 @@ src/
   preload/        Electron preload (context bridge)
 build/            App icons
 scripts/          Build scripts
+tests/            Unit, integration, and live tests
 ```
 
 ## License
