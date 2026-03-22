@@ -1,7 +1,7 @@
 {
   "name": "rdb3",
   "productName": "rdb3",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Desktop PostgreSQL database client",
   "main": "dist/main/index.js",
   "scripts": {
