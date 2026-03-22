@@ -6,7 +6,8 @@ import * as postgres from '../../src/main/postgres';
 
 /**
  * Live integration tests that connect to a real PostgreSQL database.
- * Requires a valid .env file with DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD.
+ * Requires a valid .env file with DB_HOST, DB_PORT, DB_NAME, DB_USER.
+ * Password is resolved from ~/.pgpass (or DB_PASSWORD env var if set).
  *
  * Run with: bun run test:live
  */
@@ -23,7 +24,7 @@ const conn: SavedConnection = {
   database: process.env.DB_NAME ?? 'postgres',
 };
 
-const hasEnv = !!(process.env.DB_HOST && process.env.DB_USER && process.env.DB_PASSWORD);
+const hasEnv = !!(process.env.DB_HOST && process.env.DB_USER);
 
 describe.skipIf(!hasEnv)('live database tests', () => {
   beforeAll(async () => {
