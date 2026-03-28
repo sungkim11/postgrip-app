@@ -4261,9 +4261,9 @@ function ResultsTable({
                       {column}
                     </button>
                     <span className="shrink-0 scale-75 text-gray-400"><FilterIcon /></span>
-                    <button className="inline-flex shrink-0 flex-col items-center gap-0 leading-[1] text-[4px]" onClick={() => onSort(index)} type="button">
-                      <span className={classNames('-mb-[2px]', sortState?.columnIndex === index && sortState.direction === 'asc' ? 'text-black' : 'text-white')} style={{ WebkitTextStroke: '0.3px #888' }}>&#9650;</span>
-                      <span className={classNames('-mt-[2px]', sortState?.columnIndex === index && sortState.direction === 'desc' ? 'text-black' : 'text-white')} style={{ WebkitTextStroke: '0.3px #888' }}>&#9660;</span>
+                    <button className="inline-flex shrink-0 flex-col items-center gap-0 leading-none text-[3.5px]" onClick={() => onSort(index)} type="button">
+                      <span className={classNames('-mb-[3px]', sortState?.columnIndex === index && sortState.direction === 'asc' ? 'text-black' : 'text-white')} style={{ WebkitTextStroke: '0.3px #888' }}>&#9650;</span>
+                      <span className={classNames('-mt-[3px]', sortState?.columnIndex === index && sortState.direction === 'desc' ? 'text-black' : 'text-white')} style={{ WebkitTextStroke: '0.3px #888' }}>&#9660;</span>
                     </button>
                   </div>
                   <div
