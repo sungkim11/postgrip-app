@@ -20,6 +20,8 @@ interface ElectronAPI {
   getModifyTableInfo(schema: string, table: string): Promise<ModifyTableInfo>;
   alterTable(schema: string, table: string, actions: AlterTableAction[]): Promise<AppSnapshot>;
   exportTableCsv(schema: string, table: string, path: string): Promise<number>;
+  createSchema(schemaName: string): Promise<AppSnapshot>;
+  createTable(schema: string, tableName: string, columns: Array<{ name: string; type: string; nullable: boolean; defaultValue?: string }>): Promise<AppSnapshot>;
   exportPgDump(schema: string, table: string, filePath: string, format: string): Promise<void>;
   showSaveDialog(options: { defaultPath?: string; filters?: Array<{ name: string; extensions: string[] }> }): Promise<string | null>;
   writeFile(filePath: string, content: string): Promise<void>;

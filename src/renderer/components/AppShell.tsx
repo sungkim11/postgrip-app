@@ -107,6 +107,17 @@ type ContextMenuState = {
   table: string;
 } | null;
 
+type DatabaseContextMenuState = {
+  x: number;
+  y: number;
+} | null;
+
+type SchemaContextMenuState = {
+  x: number;
+  y: number;
+  schema: string;
+} | null;
+
 type ConnectionContextMenuState = {
   x: number;
   y: number;
@@ -180,6 +191,11 @@ export function AppShell() {
   const [dragState, setDragState] = useState<DragState>(null);
   const [contextMenu, setContextMenu] = useState<ContextMenuState>(null);
   const [connectionContextMenu, setConnectionContextMenu] = useState<ConnectionContextMenuState>(null);
+  const [databaseContextMenu, setDatabaseContextMenu] = useState<DatabaseContextMenuState>(null);
+  const [schemaContextMenu, setSchemaContextMenu] = useState<SchemaContextMenuState>(null);
+  const [showCreateSchemaModal, setShowCreateSchemaModal] = useState(false);
+  const [showCreateTableModal, setShowCreateTableModal] = useState(false);
+  const [createTableSchema, setCreateTableSchema] = useState('');
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState>(null);
   const [destructiveTableDialog, setDestructiveTableDialog] = useState<DestructiveTableDialogState>(null);
   const [destructiveCascade, setDestructiveCascade] = useState(false);
@@ -679,6 +695,32 @@ export function AppShell() {
       await api.deleteBackupSchedule(id);
       setBackupSchedules(await api.listBackupSchedules());
     } catch (err) { setError(errorMessage(err)); }
+  }
+
+  async function handleCreateSchema(schemaName: string) {
+    setShowCreateSchemaModal(false);
+    try {
+      setLoading(`Creating schema ${schemaName}...`);
+      const next = await api.createSchema(schemaName);
+      setSnapshot(next);
+      setLoading('');
+    } catch (err) {
+      setLoading('');
+      setError(errorMessage(err));
+    }
+  }
+
+  async function handleCreateTable(schema: string, tableName: string, columns: Array<{ name: string; type: string; nullable: boolean; defaultValue?: string }>) {
+    setShowCreateTableModal(false);
+    try {
+      setLoading(`Creating table ${schema}.${tableName}...`);
+      const next = await api.createTable(schema, tableName, columns);
+      setSnapshot(next);
+      setLoading('');
+    } catch (err) {
+      setLoading('');
+      setError(errorMessage(err));
+    }
   }
 
   async function openHelpViewer() {
@@ -1519,7 +1561,7 @@ export function AppShell() {
   }
 
   return (
-    <main className="h-screen bg-transparent text-[13px] text-black" onClick={() => { if (openMenu) setOpenMenu(null); setContextMenu(null); setConnectionContextMenu(null); }}>
+    <main className="h-screen bg-transparent text-[13px] text-black" onClick={() => { if (openMenu) setOpenMenu(null); setContextMenu(null); setConnectionContextMenu(null); setDatabaseContextMenu(null); setSchemaContextMenu(null); }}>
       <div className="flex h-screen flex-col overflow-hidden">
         <header className="glass-panel relative m-1.5 mb-0 shrink-0 overflow-visible rounded-lg">
           <div className="flex h-7 items-center justify-between px-3">
@@ -1658,6 +1700,12 @@ export function AppShell() {
                       onTableContextMenu={(event, schema, table) => {
                         event.preventDefault();
                         setContextMenu({ x: event.clientX, y: event.clientY, schema, table });
+                      }}
+                      onDatabaseContextMenu={(event) => {
+                        setDatabaseContextMenu({ x: event.clientX, y: event.clientY });
+                      }}
+                      onSchemaContextMenu={(event, schema) => {
+                        setSchemaContextMenu({ x: event.clientX, y: event.clientY, schema });
                       }}
                     />
                   ) : (
@@ -2158,6 +2206,44 @@ export function AppShell() {
         </div>
       ) : null}
 
+      {databaseContextMenu ? (
+        <div className="fixed inset-0 z-30" onClick={() => setDatabaseContextMenu(null)} onContextMenu={(e) => { e.preventDefault(); setDatabaseContextMenu(null); }}>
+          <div className="context-menu absolute min-w-[160px] rounded-xl py-1" style={{ left: databaseContextMenu.x, top: databaseContextMenu.y }} onClick={(e) => e.stopPropagation()}>
+            <button className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] text-black hover:bg-white/40" onClick={() => { setDatabaseContextMenu(null); setShowCreateSchemaModal(true); }} type="button">
+              <span className="text-gray-500"><PlusIcon /></span>
+              Create Schema
+            </button>
+            <button className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] text-black hover:bg-white/40" onClick={() => { setDatabaseContextMenu(null); void refresh(); }} type="button">
+              <span className="text-gray-500"><RefreshIcon /></span>
+              Refresh
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {schemaContextMenu ? (
+        <div className="fixed inset-0 z-30" onClick={() => setSchemaContextMenu(null)} onContextMenu={(e) => { e.preventDefault(); setSchemaContextMenu(null); }}>
+          <div className="context-menu absolute min-w-[160px] rounded-xl py-1" style={{ left: schemaContextMenu.x, top: schemaContextMenu.y }} onClick={(e) => e.stopPropagation()}>
+            <button className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] text-black hover:bg-white/40" onClick={() => { setCreateTableSchema(schemaContextMenu.schema); setSchemaContextMenu(null); setShowCreateTableModal(true); }} type="button">
+              <span className="text-gray-500"><PlusIcon /></span>
+              Create Table
+            </button>
+            <button className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] text-black hover:bg-white/40" onClick={() => { setSchemaContextMenu(null); void refresh(); }} type="button">
+              <span className="text-gray-500"><RefreshIcon /></span>
+              Refresh
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {showCreateSchemaModal ? (
+        <CreateSchemaModal onClose={() => setShowCreateSchemaModal(false)} onCreate={handleCreateSchema} />
+      ) : null}
+
+      {showCreateTableModal ? (
+        <CreateTableModal schema={createTableSchema} onClose={() => setShowCreateTableModal(false)} onCreate={handleCreateTable} />
+      ) : null}
+
       {destructiveTableDialog ? (() => {
         const { action, schema, table } = destructiveTableDialog;
         const isDrop = action === 'drop';
@@ -2655,6 +2741,109 @@ export function AppShell() {
         </div>
       ) : null}
     </main>
+  );
+}
+
+function CreateSchemaModal({ onClose, onCreate }: { onClose: () => void; onCreate: (name: string) => void }) {
+  const [name, setName] = useState('');
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={onClose}>
+      <div className="glass-panel-strong w-[400px] rounded-2xl p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4 text-[14px] font-medium text-black">Create Schema</div>
+        <div className="mb-4">
+          <label className="mb-1 block text-[12px] font-medium text-black">Schema Name</label>
+          <input className="input text-[12px]" value={name} onChange={(e) => setName(e.target.value)} placeholder="new_schema" autoFocus onKeyDown={(e) => { if (e.key === 'Enter' && name.trim()) onCreate(name.trim()); }} />
+        </div>
+        <div className="flex justify-end gap-2">
+          <button className="rounded-lg border border-black/10 px-4 py-1.5 text-[12px] text-gray-500 hover:text-black" onClick={onClose} type="button">Cancel</button>
+          <button className="rounded-lg bg-[var(--accent)] px-4 py-1.5 text-[12px] text-white hover:opacity-90 disabled:opacity-50" disabled={!name.trim()} onClick={() => onCreate(name.trim())} type="button">Create</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CreateTableModal({ schema, onClose, onCreate }: { schema: string; onClose: () => void; onCreate: (schema: string, tableName: string, columns: Array<{ name: string; type: string; nullable: boolean; defaultValue?: string }>) => void }) {
+  const [tableName, setTableName] = useState('');
+  const [columns, setColumns] = useState<Array<{ name: string; type: string; nullable: boolean; defaultValue: string }>>([
+    { name: 'id', type: 'serial', nullable: false, defaultValue: '' },
+  ]);
+
+  function addColumn() {
+    setColumns((prev) => [...prev, { name: '', type: 'text', nullable: true, defaultValue: '' }]);
+  }
+
+  function updateColumn(index: number, field: string, value: string | boolean) {
+    setColumns((prev) => prev.map((c, i) => i === index ? { ...c, [field]: value } : c));
+  }
+
+  function removeColumn(index: number) {
+    setColumns((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function handleCreate() {
+    const cols = columns.filter((c) => c.name.trim()).map((c) => ({
+      name: c.name.trim(),
+      type: c.type,
+      nullable: c.nullable,
+      defaultValue: c.defaultValue.trim() || undefined,
+    }));
+    if (tableName.trim() && cols.length > 0) onCreate(schema, tableName.trim(), cols);
+  }
+
+  const COMMON_TYPES = ['serial', 'bigserial', 'integer', 'bigint', 'smallint', 'text', 'varchar(255)', 'boolean', 'timestamp', 'timestamptz', 'date', 'numeric', 'real', 'double precision', 'uuid', 'jsonb', 'json', 'bytea'];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={onClose}>
+      <div className="glass-panel-strong flex h-[70vh] w-[600px] max-w-[90vw] flex-col overflow-hidden rounded-2xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex h-10 shrink-0 items-center justify-between border-b border-black/5 px-4">
+          <span className="text-[14px] font-medium text-black">Create Table in {schema}</span>
+          <button className="text-[18px] text-gray-400 hover:text-black" onClick={onClose} type="button">&times;</button>
+        </div>
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          <div className="mb-4">
+            <label className="mb-1 block text-[12px] font-medium text-black">Table Name</label>
+            <input className="input text-[12px]" value={tableName} onChange={(e) => setTableName(e.target.value)} placeholder="new_table" autoFocus />
+          </div>
+          <div className="mb-2 flex items-center justify-between">
+            <label className="text-[12px] font-medium text-black">Columns</label>
+            <button className="rounded border border-[var(--accent)] px-2 py-0.5 text-[11px] text-[var(--accent)] hover:bg-[var(--accent)]/10" onClick={addColumn} type="button">+ Add Column</button>
+          </div>
+          <table className="min-w-full border-collapse text-[12px]">
+            <thead>
+              <tr>
+                <th className="border-b border-black/8 px-2 py-1 text-left font-medium text-black">Name</th>
+                <th className="border-b border-black/8 px-2 py-1 text-left font-medium text-black">Type</th>
+                <th className="border-b border-black/8 px-2 py-1 text-left font-medium text-black">Nullable</th>
+                <th className="border-b border-black/8 px-2 py-1 text-left font-medium text-black">Default</th>
+                <th className="border-b border-black/8 px-2 py-1 w-8" />
+              </tr>
+            </thead>
+            <tbody>
+              {columns.map((col, i) => (
+                <tr key={i} className="border-b border-black/5">
+                  <td className="px-1 py-1"><input className="input py-1 text-[12px]" value={col.name} onChange={(e) => updateColumn(i, 'name', e.target.value)} placeholder="column_name" /></td>
+                  <td className="px-1 py-1">
+                    <select className="input py-1 text-[12px]" value={col.type} onChange={(e) => updateColumn(i, 'type', e.target.value)}>
+                      {COMMON_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </td>
+                  <td className="px-1 py-1 text-center"><input type="checkbox" checked={col.nullable} onChange={(e) => updateColumn(i, 'nullable', e.target.checked)} /></td>
+                  <td className="px-1 py-1"><input className="input py-1 text-[12px]" value={col.defaultValue} onChange={(e) => updateColumn(i, 'defaultValue', e.target.value)} placeholder="optional" /></td>
+                  <td className="px-1 py-1 text-center">
+                    <button className="text-red-400 hover:text-red-600" onClick={() => removeColumn(i)} type="button">&times;</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex items-center justify-end gap-2 border-t border-black/5 px-5 py-3">
+          <button className="rounded-lg border border-black/10 px-4 py-1.5 text-[12px] text-gray-500 hover:text-black" onClick={onClose} type="button">Cancel</button>
+          <button className="rounded-lg bg-[var(--accent)] px-4 py-1.5 text-[12px] text-white hover:opacity-90 disabled:opacity-50" disabled={!tableName.trim() || columns.filter((c) => c.name.trim()).length === 0} onClick={handleCreate} type="button">Create Table</button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -3605,7 +3794,7 @@ function TableTreeNode({ schema, table, onPreview, onContextMenu }: { schema: st
   );
 }
 
-function DatabaseTree({ connection, tree, onPreview, onTableContextMenu }: { connection: ActiveConnectionSummary; tree: SchemaNode[]; onPreview: (schema: string, table: string) => Promise<void>; onTableContextMenu: (event: React.MouseEvent, schema: string, table: string) => void; }) {
+function DatabaseTree({ connection, tree, onPreview, onTableContextMenu, onDatabaseContextMenu, onSchemaContextMenu }: { connection: ActiveConnectionSummary; tree: SchemaNode[]; onPreview: (schema: string, table: string) => Promise<void>; onTableContextMenu: (event: React.MouseEvent, schema: string, table: string) => void; onDatabaseContextMenu: (event: React.MouseEvent) => void; onSchemaContextMenu: (event: React.MouseEvent, schema: string) => void; }) {
   const [dbOpen, setDbOpen] = useState(true);
   const [openSchemas, setOpenSchemas] = useState<Record<string, boolean>>({});
 
@@ -3623,7 +3812,7 @@ function DatabaseTree({ connection, tree, onPreview, onTableContextMenu }: { con
 
   return (
     <div className="overflow-auto">
-      <button className="flex w-full items-center gap-2 px-2 py-1 text-left hover:bg-white/40" onClick={() => setDbOpen((c) => !c)} type="button">
+      <button className="flex w-full items-center gap-2 px-2 py-1 text-left hover:bg-white/40" onClick={() => setDbOpen((c) => !c)} onContextMenu={(e) => { e.preventDefault(); onDatabaseContextMenu(e); }} type="button">
         <span className="w-4 shrink-0 text-center text-gray-500">{dbOpen ? '\u25BE' : '\u25B8'}</span>
         <ExplorerIcon><DatabaseIcon /></ExplorerIcon>
         <span className="flex-1 truncate text-black">{connection.database}@{connection.host}</span>
@@ -3634,7 +3823,7 @@ function DatabaseTree({ connection, tree, onPreview, onTableContextMenu }: { con
             const schemaOpen = openSchemas[schema.name] ?? true;
             return (
               <div key={schema.name}>
-                <button className="flex w-full items-center gap-2 py-1 pl-8 pr-2 text-left hover:bg-white/40" onClick={() => setOpenSchemas((current) => ({ ...current, [schema.name]: !schemaOpen }))} type="button">
+                <button className="flex w-full items-center gap-2 py-1 pl-8 pr-2 text-left hover:bg-white/40" onClick={() => setOpenSchemas((current) => ({ ...current, [schema.name]: !schemaOpen }))} onContextMenu={(e) => { e.preventDefault(); onSchemaContextMenu(e, schema.name); }} type="button">
                   <span className="w-4 shrink-0 text-center text-gray-500">{schemaOpen ? '\u25BE' : '\u25B8'}</span>
                   <ExplorerIcon><FolderIcon /></ExplorerIcon>
                   <span className="flex-1 truncate text-black">{schema.name}</span>
