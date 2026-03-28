@@ -1001,6 +1001,8 @@ export function AppShell() {
   }
 
   async function handlePreviewTable(schema: string, table: string) {
+    setShowMonitoringPanel(false);
+    setShowBackupPanel(false);
     try {
       setLoading(`Loading ${schema}.${table}...`);
       setError(null);
