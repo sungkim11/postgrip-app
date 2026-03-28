@@ -204,6 +204,18 @@ export function registerIpcHandlers(): void {
     return postgres.exportTableCsv(appState.activeConnection, schema, table, path);
   });
 
+  ipcMain.handle('create-schema', async (_event, schemaName: string) => {
+    if (!appState.activeConnection) throw new Error('No active database connection');
+    await postgres.createSchema(appState.activeConnection, schemaName);
+    return snapshotWithTree();
+  });
+
+  ipcMain.handle('create-table', async (_event, schema: string, tableName: string, columns: Array<{ name: string; type: string; nullable: boolean; defaultValue?: string }>) => {
+    if (!appState.activeConnection) throw new Error('No active database connection');
+    await postgres.createTable(appState.activeConnection, schema, tableName, columns);
+    return snapshotWithTree();
+  });
+
   ipcMain.handle('export-pg-dump', async (_event, schema: string, table: string, filePath: string, format: string) => {
     if (!appState.activeConnection) throw new Error('No active database connection');
     const conn = appState.activeConnection;

@@ -430,6 +430,30 @@ export async function getMonitoringData(conn: SavedConnection): Promise<Monitori
   }
 }
 
+export async function createSchema(conn: SavedConnection, schemaName: string): Promise<void> {
+  const client = await connect(conn);
+  try {
+    await client.query(`CREATE SCHEMA ${quoteIdentifier(schemaName)}`);
+  } finally {
+    client.release();
+  }
+}
+
+export async function createTable(conn: SavedConnection, schema: string, tableName: string, columns: Array<{ name: string; type: string; nullable: boolean; defaultValue?: string }>): Promise<void> {
+  const client = await connect(conn);
+  try {
+    const colDefs = columns.map((c) => {
+      let def = `${quoteIdentifier(c.name)} ${c.type}`;
+      if (!c.nullable) def += ' NOT NULL';
+      if (c.defaultValue) def += ` DEFAULT ${c.defaultValue}`;
+      return def;
+    });
+    await client.query(`CREATE TABLE ${quoteIdentifier(schema)}.${quoteIdentifier(tableName)} (\n  ${colDefs.join(',\n  ')}\n)`);
+  } finally {
+    client.release();
+  }
+}
+
 export async function executeSql(conn: SavedConnection, sql: string): Promise<void> {
   const client = await connect(conn);
   try {

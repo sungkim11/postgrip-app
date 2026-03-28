@@ -34,6 +34,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('alter-table', schema, table, actions),
   exportTableCsv: (schema: string, table: string, path: string) =>
     ipcRenderer.invoke('export-table-csv', schema, table, path),
+  createSchema: (schemaName: string) => ipcRenderer.invoke('create-schema', schemaName),
+  createTable: (schema: string, tableName: string, columns: unknown[]) => ipcRenderer.invoke('create-table', schema, tableName, columns),
   exportPgDump: (schema: string, table: string, filePath: string, format: string) =>
     ipcRenderer.invoke('export-pg-dump', schema, table, filePath, format),
   showSaveDialog: (options: unknown) =>
