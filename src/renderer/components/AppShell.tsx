@@ -1638,11 +1638,7 @@ export function AppShell() {
           </div>
 
           <div className="flex items-center gap-1 border-t border-black/5 bg-white px-3 py-0.5 text-black/50">
-            <ToolbarIconButton onClick={openNewConnectionModal} title="New connection"><PlusIcon /></ToolbarIconButton>
-            <ToolbarIconButton onClick={() => openNewQueryTab()} title="New query"><QueryIcon /></ToolbarIconButton>
-            <ToolbarIconButton onClick={() => openSqlEditor()} title="Open SQL editor"><PanelIcon /></ToolbarIconButton>
             <ToolbarIconButton onClick={() => void refresh()} title="Refresh"><RefreshIcon /></ToolbarIconButton>
-            <ToolbarIconButton onClick={() => { exportCurrentResult(); }} title="Export CSV"><ExportIcon /></ToolbarIconButton>
           </div>
         </header>
 

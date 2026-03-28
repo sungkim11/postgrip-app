@@ -37,12 +37,6 @@ test.describe('Toolbar and Menus', () => {
     await expect(page.locator('.cm-editor')).not.toBeVisible();
   });
 
-  test('New query button opens editor', async () => {
-    await page.locator('button[title="New query"]').click();
-    await expect(page.locator('.cm-editor')).toBeVisible({ timeout: 5000 });
-    await page.locator('button', { hasText: 'Close' }).click();
-  });
-
   test('Refresh button exists', async () => {
     await expect(page.locator('button[title="Refresh"]').first()).toBeVisible();
   });
